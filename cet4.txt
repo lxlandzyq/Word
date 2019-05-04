@@ -1,0 +1,9 @@
+首先先创建数据库数据库名字为：word，然后再创建表格 cet4；
+CREATE TABLE `cet4` (
+  `count` int(11) NOT NULL,
+  `word` varchar(50) NOT NULL,
+  `mean` varchar(50) NOT NULL,
+  `day` int(11) DEFAULT NULL,
+  `mistake` int(11) DEFAULT NULL,
+  PRIMARY KEY (`count`)
+) ENGINE=InnoDB DEFAULT CHARSET=gbk 
