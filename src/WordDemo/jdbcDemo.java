@@ -53,6 +53,7 @@ public class jdbcDemo {
 	public static String getWord() {
 		return ant;//将此时的单词给window
 	}
+	
 	public static String nextWord() {
 		ArrayList<String> temp = new ArrayList();
 		if(!(al.size()==0)) {
@@ -70,7 +71,8 @@ public class jdbcDemo {
 		System.out.println(temp.size());
 		System.out.println(array);
 		int a=r.nextInt(temp.size());
-		ant=temp.remove(a);
+		
+		ant=temp.remove(a);//当前的的单词为ant
 		return ant;
 	}
 	/**

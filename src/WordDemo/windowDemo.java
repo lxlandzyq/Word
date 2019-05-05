@@ -5,9 +5,10 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -22,6 +23,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import audioTrans.http_to_audio;
 
 import com.baidu.translate.demo.Main;
 
@@ -42,6 +45,7 @@ public class windowDemo {
 	static JTextArea meanFile;//翻译意思显示位置
 	static JTextField cxj ;//输入单词显示
 	static Main m ;//百度翻译接口
+	static http_to_audio hta ;//实现语音朗诵
 	class Listner implements ActionListener{//用于主界面的三个按钮的事件监听
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -56,7 +60,7 @@ public class windowDemo {
 					// TODO Auto-generated catch block
 					e2.printStackTrace();
 				}break;
-			case "记单词" : c.show(sum, "1");try {
+			case "记单词": c.show(sum, "1");try {
 					//jdbcDemo.init(jdbcDemo.day);
 					jdbcDemo.init(jdbcDemo.day);
 					jdbcDemo.init(jdbcDemo.day);//两遍今天的内容
@@ -79,6 +83,90 @@ public class windowDemo {
 				}break;
 			}
 		}
+	}
+	class KeyBordListener implements KeyListener{
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			// TODO Auto-generated method stub
+			if(e.getKeyCode()==KeyEvent.VK_Q){
+				//说明此时是不认识的按钮
+				if(rrjbFlag){//如果已经是认识的界面了点击不认识的话，则也存入到系统里，但是不显示意思，如果是一开始就点击不认识的话则会直接存到系统里面，也显示意思
+					//显示下一个单词不显示意思咯
+					jl.setText("<html><body>"+jdbcDemo.getWord()+"<br>"+jdbcDemo.getMean(jdbcDemo.getWord())+"<body></html>");//当不懂的时候与单词同时显示出来将意思显示出来
+					rrjbFlag=false;
+				}
+				else{
+					rrjbFlag=true;
+					jdbcDemo.addArray(jdbcDemo.getWord());//存入下一个值
+					try {
+						jdbcDemo.addMistak((String)jdbcDemo.getWord());
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}//对不懂的单词错误加1
+					String temp=jdbcDemo.nextWord();	
+					jl.setText(temp);//显示下一个单词，同时存入这一个单词为错
+				}
+			}
+			else{
+				if(e.getKeyCode()==KeyEvent.VK_V){
+					//为认识的界面
+					if(!jdbcDemo.al.isEmpty()||!jdbcDemo.array.isEmpty()||rrjbFlag) {//说明还有下一个值,其中最后一个参数用来判断这一天的最后一个单词用来显示意思
+						//显示之后，再显示其意思，显示意思之后再判断是否真的认识这个单词
+						if(rrjbFlag){//当为true的时候说明这个单词已经点了认识了，再进行判断是否真的认识
+							jl.setText("<html><body>"+jdbcDemo.getWord()+"<br>"+jdbcDemo.getMean(jdbcDemo.getWord())+"<body></html>");
+							rrjbFlag=false;
+						}
+						else{
+							rrjbFlag=true;
+							String temp=jdbcDemo.nextWord();
+							jl.setText(temp);
+						}
+						
+					}
+					else {//判断接下来的天数是否还有单词
+						
+						if(currentDay==5||currentDay<0||mainDay-removeDay[currentDay]<=0)
+							jl.setText("全部单词已经结束");
+						else {
+							mainDay=mainDay-removeDay[currentDay];
+							jl.setText("开始的"+mainDay+"天");
+							try {
+								Thread.sleep(2000);
+								rjbFirst.setText("现在是记第"+mainDay+"天的单词");
+								jdbcDemo.init(mainDay);
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							currentDay++;
+						}
+					}
+				}
+				else{
+					if(e.getKeyCode()==KeyEvent.VK_R){
+						//此时为播放音频的按钮
+						//获取其单词，然后进行发音
+						String temp=jdbcDemo.getWord();
+						hta.setAudio(temp);//进行读取
+					}
+				}
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
 	}
 	windowDemo() throws Exception{
 		//f.setLayout(null);
@@ -177,6 +265,7 @@ public class windowDemo {
 		rjp.setLayout(null/*new GridLayout(3,3,50,50)*/);
 		JButton rrjb=null;
 		JButton rrjb2=null;
+		JButton audioJB=null;
 		JPanel rjpFirst = new JPanel() ;//用于显示当前存的是第几天的单词
 		rjp.add(rjbFirst);
 		b.setBounds(130, 10, 130, 60);//记单词界面的返回的位置
@@ -196,8 +285,37 @@ public class windowDemo {
 		rback.setBounds(0, 0, 800, 650);
 		rjp.add(rback);
 		rjp.setBackground(Color.lightGray);
-		rrjb2.addActionListener(new ActionListener(){
+		
+		//添加新功能实现语音朗诵按钮
+		audioJB= new JButton("发音");
+		audioJB.setBounds(130, 100, 130, 80);
+		audioJB.addActionListener(new ActionListener(){
 
+			public void keyPressed(KeyEvent e){
+				if(e.getKeyCode()==KeyEvent.VK_R){
+					//不认识的
+				}
+			}
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+					//此时为播放音频的按钮
+					//获取其单词，然后进行发音
+					String temp=jdbcDemo.getWord();
+					hta.setAudio(temp);//进行读取
+			}
+			
+		});
+		//audioJB.addKeyListener(new KeyBordListener());
+		rjp.add(audioJB);
+		
+		//rrjb2.addKeyListener(new KeyBordListener());//实现键盘的监听
+		rrjb2.addActionListener(new ActionListener(){
+			public void keyPressed(KeyEvent e){
+				if(e.getKeyCode()==KeyEvent.VK_Q){
+					//不认识的
+				}
+			}
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
@@ -221,8 +339,13 @@ public class windowDemo {
 			}
 			
 		});
-		
+		rrjb2.addKeyListener(new KeyBordListener());//实现键盘的监听
+		rrjb.addKeyListener(new KeyBordListener());//实现键盘的监听
 		rrjb.addActionListener(new ActionListener(){
+			public void keyPressed(KeyEvent e){
+				if(e.getKeyCode()==KeyEvent.VK_V){
+				}
+			}
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
@@ -336,6 +459,8 @@ public class windowDemo {
 	public static void main(String[] args) throws Exception {
 		m = new Main();
 		new windowDemo();
+		hta = new http_to_audio();
+		
 	}
 
 } 
